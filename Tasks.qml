@@ -80,10 +80,12 @@ Panel {
     var revision = selectionRevision
     return Object.keys(selectedLines).length
   }
-  readonly property int sidebarEntryCount: projects.length + contexts.length
-  readonly property string previewFilterKind: sidebarCursor < projects.length ? "project" : "context"
-  readonly property string previewFilterValue: sidebarCursor < projects.length
-    ? (projects[sidebarCursor] || "") : (contexts[sidebarCursor - projects.length] || "")
+  readonly property int sidebarEntryCount: projects.length + contexts.length + 2
+  readonly property string previewFilterKind: sidebarCursor === 0 ? "all" : (sidebarCursor === 1 ? "due"
+    : (sidebarCursor >= 2 && sidebarCursor < projects.length + 2 ? "project" : "context"))
+  readonly property string previewFilterValue: sidebarCursor === 1 ? ""
+    : (sidebarCursor === 0 ? "" : (sidebarCursor < projects.length + 2
+      ? (projects[sidebarCursor - 2] || "") : (contexts[sidebarCursor - projects.length - 2] || "")))
   readonly property string effectiveFilterKind: sidebarPreviewActive && filterSidebarOpen
     && sidebarEntryCount > 0 ? previewFilterKind : filterKind
   readonly property string effectiveFilterValue: sidebarPreviewActive && filterSidebarOpen
@@ -249,7 +251,16 @@ Panel {
   function openSidebar(kind) {
     clearPrefix()
     filterSidebarOpen = true
-    sidebarCursor = kind === "context" ? projects.length : 0
+    sidebarCursor = kind === "context" ? projects.length + 2 : 2
+    if (filterKind === "all") sidebarCursor = 0
+    else if (filterKind === "due") sidebarCursor = 1
+    else if (filterKind === "project") {
+      var projectIndex = projects.indexOf(filterValue)
+      if (projectIndex >= 0) sidebarCursor = projectIndex + 2
+    } else if (filterKind === "context") {
+      var contextIndex = contexts.indexOf(filterValue)
+      if (contextIndex >= 0) sidebarCursor = projects.length + contextIndex + 2
+    }
     if (sidebarEntryCount > 0) sidebarCursor = Math.min(sidebarCursor, sidebarEntryCount - 1)
     sidebarPreviewActive = sidebarEntryCount > 0
     taskList.positionViewAtBeginning()
@@ -280,16 +291,26 @@ Panel {
 
   function activateSidebarCursor() {
     if (sidebarEntryCount === 0) return
-    var kind = sidebarCursor < projects.length ? "project" : "context"
-    var value = kind === "project" ? projects[sidebarCursor] : contexts[sidebarCursor - projects.length]
+    if (sidebarCursor === 0) {
+      applySidebarFilter("all", "")
+      return
+    }
+    if (sidebarCursor === 1) {
+      applySidebarFilter("due", "")
+      return
+    }
+    var kind = sidebarCursor < projects.length + 2 ? "project" : "context"
+    var value = kind === "project" ? projects[sidebarCursor - 2]
+      : contexts[sidebarCursor - projects.length - 2]
     applySidebarFilter(kind, value)
   }
 
   function positionSidebarCursor() {
     if (!filterSidebarOpen || sidebarEntryCount === 0) return
-    var item = sidebarCursor < projects.length
-      ? projectRepeater.itemAt(sidebarCursor)
-      : contextRepeater.itemAt(sidebarCursor - projects.length)
+    var item = sidebarCursor === 0 ? allFilter : (sidebarCursor === 1 ? dueFilter
+      : (sidebarCursor < projects.length + 2
+        ? projectRepeater.itemAt(sidebarCursor - 2)
+        : contextRepeater.itemAt(sidebarCursor - projects.length - 2)))
     if (!item) return
     var y = item.mapToItem(sidebarColumn, 0, 0).y
     if (y < sidebarFlick.contentY) sidebarFlick.contentY = y
@@ -1131,7 +1152,7 @@ Panel {
           id: filterAction
           iconText: "󰈲"
           label: "Filter"
-          selected: root.filterSidebarOpen || root.filterKind === "project" || root.filterKind === "context"
+          selected: root.filterSidebarOpen || root.filterKind !== "all"
           onActivated: root.toggleSidebar()
         }
         TextAction { id: sortAction; iconText: "󰒺"; label: "Sort"; onActivated: root.cycleSortMode() }
@@ -1228,6 +1249,26 @@ Panel {
                 width: parent.width
                 spacing: Style.space(6)
 
+                TextAction {
+                  id: allFilter
+                  width: sidebarColumn.width
+                  label: "All"
+                  leftAlign: true
+                  selected: root.filterKind === "all"
+                  cursorHighlighted: filterSidebar.activeFocus && root.sidebarCursor === 0
+                  onActivated: root.applySidebarFilter("all", "")
+                }
+
+                TextAction {
+                  id: dueFilter
+                  width: sidebarColumn.width
+                  label: "Due"
+                  leftAlign: true
+                  selected: root.filterKind === "due"
+                  cursorHighlighted: filterSidebar.activeFocus && root.sidebarCursor === 1
+                  onActivated: root.applySidebarFilter("due", "")
+                }
+
                 Text {
                   width: parent.width
                   text: "Projects"
@@ -1248,7 +1289,7 @@ Panel {
                     countText: "(" + (root.projectCounts[modelData] || 0) + ")"
                     leftAlign: true
                     selected: root.filterKind === "project" && root.filterValue === modelData
-                    cursorHighlighted: filterSidebar.activeFocus && root.sidebarCursor === index
+                    cursorHighlighted: filterSidebar.activeFocus && root.sidebarCursor === index + 2
                     onActivated: root.applySidebarFilter("project", modelData)
                   }
                 }
@@ -1274,7 +1315,7 @@ Panel {
                     countText: "(" + (root.contextCounts[modelData] || 0) + ")"
                     leftAlign: true
                     selected: root.filterKind === "context" && root.filterValue === modelData
-                    cursorHighlighted: filterSidebar.activeFocus && root.sidebarCursor === root.projects.length + index
+                    cursorHighlighted: filterSidebar.activeFocus && root.sidebarCursor === root.projects.length + index + 2
                     onActivated: root.applySidebarFilter("context", modelData)
                   }
                 }
