@@ -48,14 +48,14 @@ Click the checklist icon in the bar to open the panel.
 - Enter text in **Add a task** and press Enter to create a task.
 - Click a task row to select it; selected tasks can be completed or deleted together.
 - Use the checkbox beside a task to complete it immediately, or the pencil button to edit it.
-- Open **Settings** with the gear button to choose a different todo.txt file.
+- Open **Settings** with the gear button to choose a different todo.txt file, or leave the path empty to follow `$TODO_FILE` / `$TODO_DIR`.
 - The count below the filters shows matching tasks; sidebar counts show all open tasks for each project or context.
 - Task titles exclude metadata. Projects and contexts appear below the title, followed by `key:value` metadata in a different color. Density controls wrapping of both lines.
 - Editing displays the complete original task, including priority, date, projects, contexts, and metadata, in a wrapping text field. Enter saves; Escape cancels. Pasted line breaks must be removed before saving.
 
 Both the bar click and `omarchy-shell omarchy-tuxedo open` toggle the panel. Use `omarchy-shell omarchy-tuxedo show` when the panel should always stay open.
 
-Completed tasks are handled by Tuxedo and use `done.txt` in the same directory as the configured todo file. Batch deletion is performed with Tuxedo's forced-delete option, so review the selection before deleting.
+Completed tasks are handled by Tuxedo and use `$DONE_FILE` or `done.txt` in the same directory as the todo file. Batch deletion is performed with Tuxedo's forced-delete option, so review the selection before deleting.
 
 ## Keyboard shortcuts
 
@@ -92,13 +92,15 @@ While **Search** has focus, `Ctrl+N` / `Ctrl+P` moves through the matching tasks
 
 ## todo.txt location and configuration
 
-By default, the plugin reads:
+By default, the plugin follows the same environment variables as the Tuxedo CLI:
 
-```text
-~/todo.txt
-```
+1. `$TODO_FILE`
+2. `$TODO_DIR/todo.txt`
+3. `~/todo.txt`
 
-To use another file, open the panel settings and enter its absolute path. Relative paths are rejected. Ordinary files in Dropbox work normally. If the configured path is a symbolic link, enter the real target path instead.
+The archive is `$DONE_FILE` if set, otherwise `done.txt` beside the todo file. Only absolute values are honored. The variables must be visible to the Omarchy shell process, so set them in your session environment (for example, `hl.env("TODO_DIR", "/path/to/dir")` in `~/.config/hypr/hyprland.lua`), not only in `~/.bashrc`. Run `omarchy restart shell` (or log in again) after changing them; the running shell keeps its old environment.
+
+To use another file, open the panel settings and enter its absolute path. Leave the field empty to return to the default. Relative paths are rejected. Ordinary files in Dropbox work normally. If the configured path is a symbolic link, enter the real target path instead.
 
 The chosen path, badge mode, description layout, and sort mode are saved to:
 
@@ -110,7 +112,7 @@ The state directory is private, state files are limited to 1 MiB, and updates us
 
 Bar placement is saved by Omarchy in its shell configuration through the official `omarchy bar move` command, only when you choose a position in Settings.
 
-For every Tuxedo action, the plugin sets `TODO_FILE` to the configured path and `DONE_FILE` to `done.txt` beside it. Standard todo.txt metadata such as priorities, `+projects`, `@contexts`, and `due:YYYY-MM-DD` is recognized by the panel.
+For every Tuxedo action, the plugin sets `TODO_FILE` to the resolved todo path and `DONE_FILE` to the resolved archive path. A custom path chosen in Settings always uses `done.txt` beside it and ignores `$DONE_FILE`. Standard todo.txt metadata such as priorities, `+projects`, `@contexts`, and `due:YYYY-MM-DD` is recognized by the panel.
 
 ### File monitoring
 

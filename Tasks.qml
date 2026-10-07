@@ -21,7 +21,13 @@ Panel {
     function hide(): void { root.close() }
   }
 
-  readonly property string defaultTodoPath: Quickshell.env("HOME") + "/todo.txt"
+  readonly property var todoEnv: ({
+    HOME: Quickshell.env("HOME"),
+    TODO_DIR: Quickshell.env("TODO_DIR"),
+    TODO_FILE: Quickshell.env("TODO_FILE"),
+    DONE_FILE: Quickshell.env("DONE_FILE")
+  })
+  readonly property string defaultTodoPath: Todo.defaultTodoPath(todoEnv)
   readonly property string statePath: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state")
     + "/omarchy/omarchy-tuxedo/state.json"
   readonly property string helperPath: {
@@ -48,7 +54,9 @@ Panel {
   readonly property string activeSearchScope: Todo.searchScope(searchText)
   property int dataRevision: 0
   property string statusMessage: ""
-  property string todoPath: defaultTodoPath
+  // Empty means follow the environment (TODO_FILE / TODO_DIR) like the tuxedo CLI does.
+  property string customTodoPath: ""
+  readonly property string todoPath: customTodoPath || defaultTodoPath
   property bool badgeDueOnly: false
   property bool twoLineDescriptions: false
   property bool filterSidebarOpen: false
@@ -387,8 +395,7 @@ Panel {
   }
 
   function donePath() {
-    var slash = todoPath.lastIndexOf("/")
-    return (slash >= 0 ? todoPath.slice(0, slash + 1) : "") + "done.txt"
+    return Todo.donePathFor(todoPath, customTodoPath, todoEnv)
   }
 
   function tuxedoCommand(args) {
@@ -490,7 +497,10 @@ Panel {
     var state = null
     try { state = JSON.parse(String(raw || "")) } catch (e) {}
     var savedPath = state ? String(state.todoPath || "").trim() : ""
-    todoPath = savedPath.charAt(0) === "/" ? savedPath : defaultTodoPath
+    // Older versions always saved the path, so the old ~/todo.txt default means "not customized".
+    customTodoPath = savedPath.charAt(0) === "/" && savedPath !== Quickshell.env("HOME") + "/todo.txt"
+      ? savedPath
+      : ""
     badgeDueOnly = state && state.badgeDueOnly === true
     twoLineDescriptions = state && state.twoLineDescriptions === true
     var savedSort = state ? String(state.sortMode || "") : ""
@@ -574,7 +584,7 @@ Panel {
   function saveState() {
     var payload = JSON.stringify({
       version: 1,
-      todoPath: todoPath,
+      todoPath: customTodoPath,
       badgeDueOnly: badgeDueOnly,
       twoLineDescriptions: twoLineDescriptions,
       sortMode: sortMode
@@ -646,7 +656,7 @@ Panel {
 
   function showSettings() {
     panelMode = "settings"
-    settingsPathField.text = todoPath
+    settingsPathField.text = customTodoPath
     Qt.callLater(function() {
       settingsPathField.forceActiveFocus()
       settingsPathField.selectAll()
@@ -660,11 +670,11 @@ Panel {
 
   function saveTodoPath(path) {
     var value = String(path || "").trim()
-    if (value.charAt(0) !== "/") {
-      statusMessage = "Use an absolute path beginning with /"
+    if (value !== "" && value.charAt(0) !== "/") {
+      statusMessage = "Use an absolute path beginning with /, or leave empty for the default"
       return
     }
-    todoPath = value
+    customTodoPath = value === defaultTodoPath ? "" : value
     saveState()
     statusMessage = ""
     panelMode = "tasks"
@@ -1812,7 +1822,9 @@ Panel {
 
         Text {
           width: parent.width
-          text: "Choose the absolute path to your todo.txt file. The archive will use done.txt in the same folder."
+          text: "Choose the absolute path to your todo.txt file, or leave empty to use $TODO_FILE, "
+            + "$TODO_DIR/todo.txt, or ~/todo.txt. The archive uses $DONE_FILE with the default file, "
+            + "otherwise done.txt in the same folder."
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption

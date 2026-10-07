@@ -34,6 +34,27 @@ function parseCompletedLine(raw) {
   return task
 }
 
+function absoluteOrEmpty(value) {
+  var text = String(value || "").trim()
+  return text.charAt(0) === "/" ? text : ""
+}
+
+// Mirrors Tuxedo: $TODO_FILE, else $TODO_DIR/todo.txt; falls back to ~/todo.txt.
+function defaultTodoPath(env) {
+  var file = absoluteOrEmpty(env.TODO_FILE)
+  if (file) return file
+  var dir = absoluteOrEmpty(env.TODO_DIR) || String(env.HOME || "")
+  return dir.replace(/\/+$/, "") + "/todo.txt"
+}
+
+// $DONE_FILE only pairs with the environment's todo file; custom paths use a sibling done.txt.
+function donePathFor(todoPath, customTodoPath, env) {
+  var file = customTodoPath ? "" : absoluteOrEmpty(env.DONE_FILE)
+  if (file) return file
+  var slash = todoPath.lastIndexOf("/")
+  return (slash >= 0 ? todoPath.slice(0, slash + 1) : "") + "done.txt"
+}
+
 function escapeHtml(value) {
   return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;")

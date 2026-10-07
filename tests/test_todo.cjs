@@ -200,3 +200,14 @@ test('search shortcuts navigate and complete without changing focus or query', (
   assert.equal(context.handleQuickTaskKey({ key: 88, modifiers: 2 }), false);
   assert.deepEqual(calls, [1, -1, 7]);
 });
+
+test('resolves default todo and done paths from the Tuxedo environment', () => {
+  const home = { HOME: '/home/u' };
+  assert.equal(todo.defaultTodoPath(home), '/home/u/todo.txt');
+  assert.equal(todo.defaultTodoPath({ ...home, TODO_DIR: '/data/tux/' }), '/data/tux/todo.txt');
+  assert.equal(todo.defaultTodoPath({ ...home, TODO_DIR: '/data', TODO_FILE: '/x/t.txt' }), '/x/t.txt');
+  assert.equal(todo.defaultTodoPath({ ...home, TODO_DIR: 'rel', TODO_FILE: 'rel.txt' }), '/home/u/todo.txt');
+  assert.equal(todo.donePathFor('/data/todo.txt', '', {}), '/data/done.txt');
+  assert.equal(todo.donePathFor('/data/todo.txt', '', { DONE_FILE: '/arc/d.txt' }), '/arc/d.txt');
+  assert.equal(todo.donePathFor('/mine/t.txt', '/mine/t.txt', { DONE_FILE: '/arc/d.txt' }), '/mine/done.txt');
+});
