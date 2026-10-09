@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "Todo.js" as Todo
 
@@ -30,10 +31,10 @@ Panel {
   }
   readonly property int todoOutputLimit: 8 * 1024 * 1024 * 6 + 256
   readonly property int stateOutputLimit: 1024 * 1024 * 6 + 256
-  readonly property color foreground: bar ? bar.foreground : Color.foreground
-  readonly property color barForeground: bar ? bar.barForeground : Color.foreground
+  readonly property color foreground: bar ? bar.foreground : Commons.Color.foreground
+  readonly property color barForeground: bar ? bar.barForeground : Commons.Color.foreground
   readonly property color dim: Qt.darker(foreground, 1.55)
-  readonly property color urgent: bar ? bar.urgent : Color.urgent
+  readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
   property var tasks: []
@@ -935,13 +936,13 @@ Panel {
       width: Math.max(Style.space(14), countText.implicitWidth + Style.space(5))
       height: Style.space(14)
       radius: height / 2
-      color: root.badgeDueOnly ? root.urgent : Color.accent
+      color: root.badgeDueOnly ? root.urgent : Commons.Color.accent
 
       Text {
         id: countText
         anchors.centerIn: parent
         text: root.badgeCount > 99 ? "99+" : String(root.badgeCount)
-        color: Color.background
+        color: Commons.Color.background
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption - 1
         font.bold: true
@@ -1036,7 +1037,7 @@ Panel {
             checked: root.twoLineDescriptions
             trackHeight: Style.space(18)
             foreground: root.foreground
-            accent: Color.accent
+            accent: Commons.Color.accent
             onToggled: root.toggleDescriptionLines()
           }
         }
@@ -1083,7 +1084,7 @@ Panel {
         width: parent.width
         placeholderText: "Search tasks — try in:done"
         foreground: root.foreground
-        accent: Color.accent
+        accent: Commons.Color.accent
         font.family: root.fontFamily
         onTextChanged: root.searchText = text
         Keys.onPressed: function(event) {
@@ -1143,7 +1144,7 @@ Panel {
         visible: root.panelMode === "tasks"
         width: parent.width
         text: root.visibleTasks.length + " matching"
-        color: Color.accent
+        color: Commons.Color.accent
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
         font.bold: true
@@ -1163,7 +1164,7 @@ Panel {
           anchors.bottom: parent.bottom
           width: Style.space(165)
           radius: Style.cornerRadius
-          color: Style.normalFillFor(root.foreground, Color.accent)
+          color: Style.normalFillFor(root.foreground, Commons.Color.accent)
           focus: false
 
           Keys.onPressed: function(event) {
@@ -1309,12 +1310,12 @@ Panel {
             : Math.max(Style.space(root.twoLineDescriptions ? 80 : 48), taskDescription.implicitHeight + Style.space(12))
           radius: Style.cornerRadius
           color: selected
-            ? Style.selectedFillFor(root.foreground, Color.accent)
+            ? Style.selectedFillFor(root.foreground, Commons.Color.accent)
             : (active
-              ? Style.hoverFillFor(root.foreground, Color.accent)
-              : (taskMouse.containsMouse ? Style.hoverFillFor(root.foreground, Color.accent) : "transparent"))
+              ? Style.hoverFillFor(root.foreground, Commons.Color.accent)
+              : (taskMouse.containsMouse ? Style.hoverFillFor(root.foreground, Commons.Color.accent) : "transparent"))
           border.width: active ? 2 : 0
-          border.color: Color.accent
+          border.color: Commons.Color.accent
 
           MouseArea {
             id: taskMouse
@@ -1388,7 +1389,7 @@ Panel {
                 visible: modelData.priority !== "" || modelData.projects.length > 0 || modelData.contexts.length > 0 || modelData.metadata.length > 0
                 text: Todo.metadataHtml(modelData, root.dim, root.urgent)
                 textFormat: Text.StyledText
-                color: Color.accent
+                color: Commons.Color.accent
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption
                 wrapMode: root.twoLineDescriptions ? Text.WordWrap : Text.NoWrap
@@ -1438,14 +1439,14 @@ Panel {
               textFormat: TextEdit.PlainText
               wrapMode: TextEdit.Wrap
               color: root.foreground
-              selectionColor: Color.accent
-              selectedTextColor: Color.background
+              selectionColor: Commons.Color.accent
+              selectedTextColor: Commons.Color.background
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
               background: Rectangle {
-                color: Color.background
+                color: Commons.Color.background
                 radius: Style.cornerRadius
-                border.color: Color.accent
+                border.color: Commons.Color.accent
               }
               Keys.onReturnPressed: root.saveEditing(taskRow.modelData, text)
               Keys.onEnterPressed: root.saveEditing(taskRow.modelData, text)
@@ -1465,7 +1466,7 @@ Panel {
               iconText: "✓"
               tooltipText: "Save"
               foreground: root.foreground
-              hoverColor: Color.accent
+              hoverColor: Commons.Color.accent
               onClicked: root.saveEditing(taskRow.modelData, editField.text)
             }
 
@@ -1510,7 +1511,7 @@ Panel {
         width: parent.width
         placeholderText: "Add a task — try: pay rent Friday"
         foreground: root.foreground
-        accent: Color.accent
+        accent: Commons.Color.accent
         font.family: root.fontFamily
         onAccepted: root.addTask(text)
         Keys.onEscapePressed: root.close()
@@ -1577,7 +1578,7 @@ Panel {
                 Text {
                   width: parent.width - projectCount.width - Style.space(5)
                   text: "+" + modelData.name
-                  color: Color.accent
+                  color: Commons.Color.accent
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.caption - 2
                   elide: Text.ElideRight
@@ -1659,7 +1660,7 @@ Panel {
                     width: Style.space(9)
                     height: width
                     radius: Math.max(1, Style.cornerRadius / 3)
-                    color: modelData.level > 0 ? Color.accent : root.foreground
+                    color: modelData.level > 0 ? Commons.Color.accent : root.foreground
                     opacity: modelData.future ? 0.04 : (modelData.level === 0 ? 0.12 : 0.28 + modelData.level * 0.18)
 
                     ToolTip.visible: activityMouse.containsMouse && !modelData.future
@@ -1691,7 +1692,7 @@ Panel {
           iconText: "✓"
           bordered: true
           foreground: root.foreground
-          accent: Color.accent
+          accent: Commons.Color.accent
           fontFamily: root.fontFamily
           onClicked: root.completeSelected()
         }
@@ -1824,7 +1825,7 @@ Panel {
           width: parent.width
           placeholderText: root.defaultTodoPath
           foreground: root.foreground
-          accent: Color.accent
+          accent: Commons.Color.accent
           font.family: root.fontFamily
           onAccepted: root.saveTodoPath(text)
           Keys.onEscapePressed: root.hideSettings()
@@ -1851,7 +1852,7 @@ Panel {
             iconText: "✓"
             bordered: true
             foreground: root.foreground
-            accent: Color.accent
+            accent: Commons.Color.accent
             fontFamily: root.fontFamily
             onClicked: root.saveTodoPath(settingsPathField.text)
           }
@@ -1889,9 +1890,9 @@ Panel {
       anchors.fill: parent
       anchors.margins: -Style.space(2)
       radius: Style.cornerRadius
-      color: action.cursorHighlighted ? Style.hoverFillFor(root.foreground, Color.accent) : "transparent"
+      color: action.cursorHighlighted ? Style.hoverFillFor(root.foreground, Commons.Color.accent) : "transparent"
       border.width: action.cursorHighlighted ? 1 : 0
-      border.color: Color.accent
+      border.color: Commons.Color.accent
     }
 
     Row {
@@ -1906,7 +1907,7 @@ Panel {
         visible: action.iconText !== ""
         anchors.verticalCenter: parent.verticalCenter
         text: action.iconText
-        color: action.selected || actionMouse.containsMouse ? Color.accent : root.dim
+        color: action.selected || actionMouse.containsMouse ? Commons.Color.accent : root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
       }
@@ -1919,7 +1920,7 @@ Panel {
           : implicitWidth
         text: action.label
         textFormat: Text.PlainText
-        color: action.selected ? Color.accent : (actionMouse.containsMouse ? root.foreground : root.dim)
+        color: action.selected ? Commons.Color.accent : (actionMouse.containsMouse ? root.foreground : root.dim)
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
         font.bold: action.selected
@@ -1975,7 +1976,7 @@ Panel {
           width: Style.space(176)
           text: modelData[0]
           textFormat: Text.PlainText
-          color: Color.accent
+          color: Commons.Color.accent
           font.family: root.fontFamily
           font.pixelSize: Style.font.body
           font.bold: true
